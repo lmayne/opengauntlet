@@ -1,0 +1,26 @@
+Add code similar to the following to the build file:
+
+	<PropertyGroup>
+		<TF>&quot;$(TeamBuildRefPath)\..\tf.exe&quot;</TF>
+	</PropertyGroup>
+	<Target Name="AfterGet">
+		<Exec WorkingDirectory="$(SolutionRoot)"
+		Command="$(TF) unshelve &quot;Test Project Default OpenGauntlet Build;TFSVPC1\TFSSERVICE&quot;" />
+	</Target>
+	<Target Name="BeforeDropBuild">
+		<Exec WorkingDirectory="$(SolutionRoot)"
+		Command="$(TF) undo /recursive /noprompt $/" ContinueOnError="true"/>
+	</Target>
+
+The shelveset name should be "<Project Name> <Profile Name> OpenGauntlet Build;<OpenGauntlet Username>"
+
+Add the following to the response file:
+
+/p:SkipLabel="true"
+/p:SkipPostBuild="true"
+/p:SkipDropBuild="true"
+/p:SkipWorkItemCreation="true"
+
+'Install' the service using
+
+schtasks /create /sc minute /mo 1 /tn "OpenGauntlet - ProfileName" /tr "C:\OpenGauntlet\OpenGauntlet.exe ProfileName"

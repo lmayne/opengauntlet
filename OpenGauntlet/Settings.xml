@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<OpenGauntlet>
+	<GlobalSettings>
+		<!-- The SMTP server to send emails through -->
+		<SmtpServer>localhost</SmtpServer>
+		<!-- SMTP port (default 25) -->
+		<SmtpPort>25</SmtpPort>
+		<!-- If you do not use integrated authentication to connect to TFS, enter the
+		   build user username and password here (username in the format Domain\Username -->
+		<TfsUsername></TfsUsername>
+		<TfsPassword></TfsPassword>
+		<!-- The email address to send reports to if the user's email address cannot be determined -->
+		<DefaultEmailAddress>AdminAddress@YourCompany.com</DefaultEmailAddress>
+		<!-- The connection string for the OpenGauntlet database -->
+		<ConnectionString>Server=(local)\SQLEXPRESS; Initial Catalog=OpenGauntlet; Integrated Security=SSPI</ConnectionString>
+		<!-- A folder OpenGauntlet can use to create temporary workspaces in, if required -->
+		<WorkspaceFolder>C:\OpenGauntlet\Workspaces</WorkspaceFolder>
+	</GlobalSettings>
+
+	<!-- Check in profiles -->
+	<Profiles>
+		<Profile name="MyProfile">
+			<!-- The TFS server URL to connect to, in the form http(s)://servername:port/-->
+			<TeamFoundationServer>http://TFSVPC1:8080/</TeamFoundationServer>
+			<!-- The local path to the mapped workspace for this profile (e.g. C:\OpenGauntlet\MyWorkspace) -->
+			<WorkspaceLocation>C:\TfsServiceWorkspace</WorkspaceLocation>
+			<!-- The name of the TFS team project this build is for -->
+			<TeamProject>Test Project</TeamProject>
+			<!-- If you want to restrict check ins to a source control path then enter it here e.g. $/Team Project/Branch1-->
+			<AllowedPath>$/Test Project/Branch 1</AllowedPath>
+			<!-- The prefix for shelvesets that OpenGauntlet should process -->
+			<ShelvesetPrefix>GC-</ShelvesetPrefix>
+			<!-- The name of the build type configured for OpenGauntlet-->
+			<TeamBuildType>Test Build</TeamBuildType>
+			<!-- The user to start the build as -->
+			<BuildUser>TFSVPC1\TFSSERVICE</BuildUser>
+			<!-- The build machine to build the build type on -->
+			<BuildMachine>TFSVPC1</BuildMachine>
+			<!-- The directory on the build machine to build in -->
+			<BuildDirectory>C:\TfsBuild</BuildDirectory>
+			<!-- File to log output to (leave blank so sent output to the command line) -->
+			<LogFile>C:\OpenGauntlet\MyProfile.log</LogFile>
+		</Profile>
+	</Profiles>
+</OpenGauntlet>
