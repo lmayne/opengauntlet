@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- Additional constants -->
+    <TeamBuildConstants>_TEAM_BUILD_</TeamBuildConstants>
+    <CoreCompileDependsOn/>
+  </PropertyGroup>
+  <Target Name="CoreCompile"
+          DependsOnTargets="$(CoreCompileDependsOn)"
+          Inputs="%(ConfigurationToBuild.PlatformToBuild);%(ConfigurationToBuild.FlavorToBuild)"
+          Outputs="%(ConfigurationToBuild.PlatformToBuild);%(ConfigurationToBuild.FlavorToBuild)" >
+
+    <MakeDir
+          Directories="$(BinariesRoot)"
+          Condition="!Exists('$(BinariesRoot)')" />
+
+    <!-- OutDirForCompile for not Any CPU -->
+    <CreateItem
+          Condition=" '%(ConfigurationToBuild.PlatformToBuild)'!='Any CPU' "
+          Include="$(BinariesRoot)\%(ConfigurationToBuild.PlatformToBuild)\%(ConfigurationToBuild.FlavorToBuild)\" >
+      <Output TaskParameter="Include" ItemName="OutDirForCompile" />
+    </CreateItem>
+
+    <!-- OutDirForCompile for Any CPU -->
+    <CreateItem
+          Condition=" '%(ConfigurationToBuild.PlatformToBuild)'=='Any CPU' "
+          Include="$(BinariesRoot)\%(ConfigurationToBuild.FlavorToBuild)\" >
+      <Output TaskParameter="Include" ItemName="OutDirForCompile" />
+    </CreateItem>
+
+    <!-- OutDir property - This is to ensure we have absolute path as property -->
+    <CreateProperty Value="%(OutDirForCompile.FullPath)" >
+      <Output TaskParameter="Value" PropertyName="OutDir" />
+    </CreateProperty>
+
+    <!-- First part of VCOverride file -->
+    <CreateProperty Value="%3C?xml version=%221.0%22?%3E%0D%0A%3CVisualStudioPropertySheet ProjectType=%22Visual C++%22 Version=%228.00%22 Name=%22Team Build Overrides%22 OutputDirectory=%22$(OutDir)%22%3E%0D%0A" >
+      <Output TaskParameter="Value" PropertyName="VCOverridesString1"/>
+    </CreateProperty>
+
+    <!-- Third part of VCOverride file -->
+    <CreateProperty Value="%3C/VisualStudioPropertySheet%3E" >
+      <Output TaskParameter="Value" PropertyName="VCOverridesString3"/>
+    </CreateProperty>
+
+    <!-- RunCodeAnalysis option -->
+    <CreateProperty
+          Condition=" '$(RunCodeAnalysis)'=='Always' "
+          Value="RunCodeAnalysis=true" >
+      <Output TaskParameter="Value" PropertyName="CodeAnalysisOption" />
+    </CreateProperty>
+
+    <!-- Second part of VCOverride file when RunCodeAnalysis is always -->
+    <CreateProperty 
+          Condition=" '$(RunCodeAnalysis)'=='Always' "
+          Value="%09%3CTool Name=%22VCCLCompilerTool%22 EnablePREfast=%22true%22 /%3E%0D%0A%09%3CTool Name=%22VCFxCopTool%22 EnableFxCop=%22true%22 /%3E%0D%0A" >
+      <Output TaskParameter="Value" PropertyName="VCOverridesString2"/>
+    </CreateProperty>
+
+    <CreateProperty
+          Condition=" '$(RunCodeAnalysis)'=='Never' "
+          Value="RunCodeAnalysis=false" >
+      <Output TaskParameter="Value" PropertyName="CodeAnalysisOption" />
+    </CreateProperty>
+
+    <!-- Second part of VCOverride file when RunCodeAnalysis is never -->
+    <CreateProperty 
+          Condition=" '$(RunCodeAnalysis)'=='Never' "
+          Value="%09%3CTool Name=%22VCCLCompilerTool%22 EnablePREfast=%22false%22 /%3E%0D%0A%09%3CTool Name=%22VCFxCopTool%22 EnableFxCop=%22false%22 /%3E%0D%0A" >
+      <Output TaskParameter="Value" PropertyName="VCOverridesString2"/>
+    </CreateProperty>
+
+    <!-- ReferencePath option -->
+    <CreateProperty
+          Condition=" '@(AdditionalReferencePath)'!='' "
+          Value="$(OutDir);@(AdditionalReferencePath)" >
+      <Output TaskParameter="Value" PropertyName="ReferencePath" />
+    </CreateProperty>
+
+    <CreateProperty
+          Condition=" '@(AdditionalReferencePath)'=='' "
+          Value="$(OutDir)" >
+      <Output TaskParameter="Value" PropertyName="ReferencePath" />
+    </CreateProperty>
+
+    <TeamBuildMessage
+          Tag="Configuration"
+          Condition=" '$(IsDesktopBuild)'!='true' "
+          Value="%(ConfigurationToBuild.FlavorToBuild)" />
+
+    <TeamBuildMessage
+          Tag="Platform"
+          Condition=" '$(IsDesktopBuild)'!='true' "
+          Value="%(ConfigurationToBuild.PlatformToBuild)" />
+
+    <!-- Generate VCOverride file for C++ projects -->
+    <WriteLinesToFile
+          File="TFSBuild.vsprops"
+          Lines="$(VCOverridesString1)$(VCOverridesString2)$(AdditionalVCOverrides)$(VCOverridesString3)"
+          Overwrite="true" />
+
+    <!-- Build using MSBuild task -->
+    <MSBuild
+          Condition=" '@(SolutionToBuild)'!='' "
+          Projects="@(SolutionToBuild)"
+          StopOnFirstFailure="true"
+          Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild);SkipInvalidConfigurations=true;VCBuildOverride=$(MSBuildProjectDirectory)\TFSBuild.vsprops;FxCopDir=$(FxCopDir);OutDir=$(OutDir);ReferencePath=$(ReferencePath);TeamBuildConstants=$(TeamBuildConstants);$(CodeAnalysisOption)"
+          Targets="Build" />
+
+    <!--
+         Specify SolutionToPublish ItemGroup if you have ClickOnce based
+         solutions or projects that you want to publish. The task below
+         will generate manifest and deployment package.
+     -->
+    <MSBuild
+          Condition=" '@(SolutionToPublish)'!='' "
+          Projects="@(SolutionToPublish)"
+          Properties="Configuration=%(ConfigurationToBuild.FlavorToBuild);Platform=%(ConfigurationToBuild.PlatformToBuild);SkipInvalidConfigurations=true;VCBuildOverride=$(MSBuildProjectDirectory)\TFSBuild.vsprops;FxCopDir=$(FxCopDir);OutDir=$(OutDir);PublishDir=$(OutDir);ReferencePath=$(ReferencePath);TeamBuildConstants=$(TeamBuildConstants);$(CodeAnalysisOption)"
+          Targets="Publish" />
+
+    <OnError ExecuteTargets="OnBuildBreak;" />
+  </Target>
+</Project>
